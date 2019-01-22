@@ -54,7 +54,7 @@ BOOL check_bool_str(wchar_t *s) {
 }
 
 void read_configuration(HWND hwnd) {
-    wchar_t *path = malloc(32768 * sizeof(wchar_t));
+    wchar_t *path = (wchar_t*)malloc(32768 * sizeof(wchar_t));
     GetModuleFileNameW(hModule, path, 32768);
     wchar_t *lastslash = wcsrchr(path, L'\\');
     wcsncpy(lastslash+1, L"autofill.ini", 32767 - (lastslash - path));
@@ -64,7 +64,7 @@ void read_configuration(HWND hwnd) {
     fwprintf(stderr, L"configuration file: %ls\n", path);
 
 	config.delay = GetPrivateProfileIntW(L"AutoFill", L"Delay", 100, path);
-    config.target_name = malloc(2048);
+    config.target_name = (wchar_t*)malloc(2048);
     GetPrivateProfileStringW(L"AutoFill", L"CredTargetName", L"ImpactorAutoFill_AppleID", config.target_name, 1024, path);
     wchar_t bool_str[16];
 	GetPrivateProfileStringW(L"AutoFill", L"Commit", L"false", bool_str, 16, path);
@@ -87,16 +87,16 @@ void read_configuration(HWND hwnd) {
 }
 
 void load_credential(HWND hwnd) {
-    config.username = malloc(2048);
+    config.username = (wchar_t*)malloc(2048);
     config.username[0] = 0;
-    config.password = malloc(2048);
+    config.password = (wchar_t*)malloc(2048);
     config.password[0] = 0;
-    CREDUI_INFOW uiinfo = {
-        .cbSize = sizeof(uiinfo),
-        .hwndParent = hwnd,
-        .pszMessageText = L"Enter Apple ID and password.",
-        .pszCaptionText = L"ImpactorAutoFill"
-    };
+    CREDUI_INFOW uiinfo;
+    uiinfo.cbSize = sizeof(uiinfo);
+    uiinfo.hwndParent = hwnd;
+    uiinfo.pszMessageText = L"Enter Apple ID and password.";
+    uiinfo.pszCaptionText = L"ImpactorAutoFill";
+
     BOOL save = TRUE;
     
     CREDENTIALW *pcred;
@@ -110,7 +110,7 @@ void load_credential(HWND hwnd) {
         
         ULONG pkg;
         void* authbuf;
-        LONG authbuflen;
+        ULONG authbuflen;
 
         DWORD result = CredUIPromptForWindowsCredentialsW(&uiinfo, 0, &pkg, NULL, 0, &authbuf, &authbuflen, &save, CREDUIWIN_GENERIC | CREDUIWIN_CHECKBOX);
         if(result != ERROR_SUCCESS) {
@@ -138,7 +138,7 @@ void load_credential(HWND hwnd) {
             CoTaskMemFree(authbuf);
         }
     }
-    fwprintf(stderr, L"username[0]=%lc, password[0]=%lc\n", config.username[0], config.password[0]);
+    fwprintf(stderr, L"#username=%d, #password=%d\n", wcslen(config.username), wcslen(config.password));
 
 }
 

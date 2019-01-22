@@ -6,9 +6,12 @@ foreach(CompilerFlag ${CompilerFlags})
   string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
 endforeach()
 
-if(NOT MSVC)
+if(MSVC)
+  set_source_files_properties(loader.c autofill.c PROPERTIES LANGUAGE CXX)
+else()
   message(WARNING "Detours library only supports MSVC")
 endif()
+add_definitions(-D_WIN32_WINNT=0x0700)
 include_directories(detours/src)
 add_library(detours STATIC
     detours/src/detours.cpp

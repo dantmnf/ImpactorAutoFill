@@ -8,10 +8,11 @@ const wchar_t* w32strerror(DWORD err) {
 }
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE _, LPWSTR lpCmdLine, int nCmdShow) {
-    STARTUPINFOW si = {.cb = sizeof(si), 0};
+    STARTUPINFOW si = {0};
+    si.cb = sizeof(si);
     PROCESS_INFORMATION pi;
     const char* dllname = "autofill.dll";
-	wchar_t *path = malloc(32768 * sizeof(wchar_t));
+	wchar_t *path = (wchar_t*)malloc(32768 * sizeof(wchar_t));
 	GetModuleFileNameW(hInstance, path, 32768);
 	wchar_t *lastslash = wcsrchr(path, L'\\');
 	wcsncpy(lastslash + 1, L"Impactor.exe", 32767 - (lastslash - path));
