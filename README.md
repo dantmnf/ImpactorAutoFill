@@ -2,7 +2,7 @@
 This 💩 will automagically fill and commit your Apple ID in Cydia Impactor.
 
 ## Usage
-Download from [GitHub releases](/releases) or build from source code, then:
+Download from [GitHub releases](https://github.com/dantmnf/ImpactorAutoFill/releases) or build from source code, then:
 * (Either) rename `autofill.dll` to `version.dll`, put it next to `Impactor.exe`  
 * (Or) put `loader.exe` and `autofill.dll` next to `Impactor.exe`, and run `loader.exe` instead
 
