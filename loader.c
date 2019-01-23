@@ -1,5 +1,5 @@
 #include <windows.h>
-#include <detours.h>
+#include "detoursfix.h"
 
 const wchar_t* w32strerror(DWORD err) {
     __declspec(thread) static wchar_t buf[4096];
@@ -8,8 +8,7 @@ const wchar_t* w32strerror(DWORD err) {
 }
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE _, LPWSTR lpCmdLine, int nCmdShow) {
-    STARTUPINFOW si = {0};
-    si.cb = sizeof(si);
+    STARTUPINFOW si = {.cb = sizeof(si), 0};
     PROCESS_INFORMATION pi;
     const char* dllname = "autofill.dll";
 	wchar_t *path = (wchar_t*)malloc(32768 * sizeof(wchar_t));

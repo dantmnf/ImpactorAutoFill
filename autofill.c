@@ -2,8 +2,7 @@
 #include <string.h>
 #include <windows.h>
 #include <wincred.h>
-// #include <shlwapi.h>
-#include <detours.h>
+#include "detoursfix.h"
 
 #define USERNAME_TIMER_ID 114514
 #define PASSWORD_TIMER_ID 810893
@@ -31,6 +30,7 @@ BOOL APIENTRY DllMain(HMODULE hMod, DWORD fdwReason, LPVOID lpReserved) {
     if (!GetModuleHandleW(L"Impactor.dll")) return TRUE;
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hMod);
             hModule = hMod;
             DetourTransactionBegin();
             DetourUpdateThread(GetCurrentThread());
@@ -43,6 +43,7 @@ BOOL APIENTRY DllMain(HMODULE hMod, DWORD fdwReason, LPVOID lpReserved) {
         case DLL_PROCESS_DETACH:
             if (config.username) free(config.username);
             if (config.password) free(config.password);
+            if (config.target_name) free(config.target_name);
             if (hHook) UnhookWindowsHookEx(hHook);
             break;
     }
@@ -58,9 +59,6 @@ void read_configuration(HWND hwnd) {
     GetModuleFileNameW(hModule, path, 32768);
     wchar_t *lastslash = wcsrchr(path, L'\\');
     wcsncpy(lastslash+1, L"autofill.ini", 32767 - (lastslash - path));
-    
-    // PathRemoveFileSpecW(path);
-    // PathAppendW(path, L"autofill.ini");
     fwprintf(stderr, L"configuration file: %ls\n", path);
 
 	config.delay = GetPrivateProfileIntW(L"AutoFill", L"Delay", 100, path);
@@ -77,11 +75,6 @@ void read_configuration(HWND hwnd) {
         WritePrivateProfileStringW(L"AutoFill", L"ClearCred", L"false", path);
     }
     
-    //GetPrivateProfileStringW(L"AutoFill", L"Username", L"username", config.username, 1024, path);
-    //GetPrivateProfileStringW(L"AutoFill", L"Password", L"password", config.password, 1024, path);
-
-
-
     fwprintf(stderr, L"delay=%d, commit=%ls\n", config.delay, config.commit ? L"true" : L"false");
     free(path);
 }
@@ -91,11 +84,12 @@ void load_credential(HWND hwnd) {
     config.username[0] = 0;
     config.password = (wchar_t*)malloc(2048);
     config.password[0] = 0;
-    CREDUI_INFOW uiinfo;
-    uiinfo.cbSize = sizeof(uiinfo);
-    uiinfo.hwndParent = hwnd;
-    uiinfo.pszMessageText = L"Enter Apple ID and password.";
-    uiinfo.pszCaptionText = L"ImpactorAutoFill";
+    CREDUI_INFOW uiinfo = {
+        .cbSize = sizeof(uiinfo),
+        .hwndParent = hwnd,
+        .pszMessageText = L"Enter Apple ID and password.",
+        .pszCaptionText = L"ImpactorAutoFill",
+    };
 
     BOOL save = TRUE;
     
@@ -131,7 +125,7 @@ void load_credential(HWND hwnd) {
                     fwprintf(stderr, L"CredWrite = %d\n", br);
                 }
             } else {
-                fwprintf(stderr, L"CredUnPackAuthenticationBufferW = false\n");
+                fwprintf(stderr, L"CredUnPackAuthenticationBufferW failed\n");
                 config.commit = FALSE;
             }
             SecureZeroMemory(authbuf, authbuflen);
